@@ -139,7 +139,7 @@ func (v *ValidOwner) initOrgListTeams(ctx context.Context) *validateError {
 		PerPage: 100,
 	}
 	for {
-		resultPage, resp, err := v.ghClient.Repositories.ListTeams(ctx, v.orgName, v.orgRepoName, req)
+		resultPage, resp, err := v.ghClient.Teams.ListTeams(ctx, v.orgName, req)
 		if err != nil { // TODO(mszostok): implement retry?
 			switch err := err.(type) {
 			case *github.ErrorResponse:
