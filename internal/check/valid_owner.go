@@ -19,6 +19,7 @@ type ValidOwnerConfig struct {
 	// More info about the @ghost user: https://docs.github.com/en/free-pro-team@latest/github/setting-up-and-managing-your-github-user-account/deleting-your-user-account
 	// Tip on how @ghost can be used: https://github.community/t5/How-to-use-Git-and-GitHub/CODEOWNERS-file-with-a-NOT-file-type-condition/m-p/31013/highlight/true#M8523
 	IgnoredOwners []string `envconfig:"default=@ghost"`
+	TeamsSource string `envconfig:default=repo`
 }
 
 // ValidOwner validates each owner
@@ -29,6 +30,7 @@ type ValidOwner struct {
 	orgTeams    []*github.Team
 	orgRepoName string
 	ignOwners   map[string]struct{}
+	teamsSource string
 }
 
 // NewValidOwner returns new instance of the ValidOwner
@@ -43,11 +45,14 @@ func NewValidOwner(cfg ValidOwnerConfig, ghClient *github.Client) (*ValidOwner, 
 		ignOwners[n] = struct{}{}
 	}
 
+	teamsSource := cfg.TeamsSource
+
 	return &ValidOwner{
 		ghClient:    ghClient,
 		orgName:     split[0],
 		orgRepoName: split[1],
 		ignOwners:   ignOwners,
+		teamsSource: teamsSource,
 	}, nil
 }
 
@@ -139,7 +144,11 @@ func (v *ValidOwner) initOrgListTeams(ctx context.Context) *validateError {
 		PerPage: 100,
 	}
 	for {
-		resultPage, resp, err := v.ghClient.Teams.ListTeams(ctx, v.orgName, req)
+		if v.teamsSource == "repo" {
+			resultPage, resp, err := v.ghClient.Repositories.ListTeams(ctx, v.orgName, v.orgRepoName, req)
+		} else {
+			resultPage, resp, err := v.ghClient.Teams.ListTeams(ctx, v.orgName, req)
+		}
 		if err != nil { // TODO(mszostok): implement retry?
 			switch err := err.(type) {
 			case *github.ErrorResponse:
