@@ -138,17 +138,22 @@ func (v *ValidOwner) selectValidateFn(name string) func(context.Context, string)
 	}
 }
 
+func (v *ValidOwner) listTeams(ctx context.Context, req *github.ListOptions) ([]*github.Team, *github.Response, error) {
+	if v.teamsSource == "repo" {
+		return v.ghClient.Repositories.ListTeams(ctx, v.orgName, v.orgRepoName, req)
+	} else {
+		return v.ghClient.Teams.ListTeams(ctx, v.orgName, req)
+	}
+	return nil, nil, nil
+}
+
 func (v *ValidOwner) initOrgListTeams(ctx context.Context) *validateError {
 	var teams []*github.Team
 	req := &github.ListOptions{
 		PerPage: 100,
 	}
 	for {
-		if v.teamsSource == "repo" {
-			resultPage, resp, err := v.ghClient.Repositories.ListTeams(ctx, v.orgName, v.orgRepoName, req)
-		} else {
-			resultPage, resp, err := v.ghClient.Teams.ListTeams(ctx, v.orgName, req)
-		}
+		resultPage, resp, err := v.listTeams(ctx, req)
 		if err != nil { // TODO(mszostok): implement retry?
 			switch err := err.(type) {
 			case *github.ErrorResponse:
