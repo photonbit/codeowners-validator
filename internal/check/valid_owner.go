@@ -19,7 +19,7 @@ type ValidOwnerConfig struct {
 	// More info about the @ghost user: https://docs.github.com/en/free-pro-team@latest/github/setting-up-and-managing-your-github-user-account/deleting-your-user-account
 	// Tip on how @ghost can be used: https://github.community/t5/How-to-use-Git-and-GitHub/CODEOWNERS-file-with-a-NOT-file-type-condition/m-p/31013/highlight/true#M8523
 	IgnoredOwners []string `envconfig:"default=@ghost"`
-	TeamsSource string `envconfig:default=repo`
+	TeamsSource string `envconfig:"optional,default=repo"`
 }
 
 // ValidOwner validates each owner
@@ -144,7 +144,6 @@ func (v *ValidOwner) listTeams(ctx context.Context, req *github.ListOptions) ([]
 	} else {
 		return v.ghClient.Teams.ListTeams(ctx, v.orgName, req)
 	}
-	return nil, nil, nil
 }
 
 func (v *ValidOwner) initOrgListTeams(ctx context.Context) *validateError {
